@@ -11,6 +11,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
+// Servicio para enviar emails transaccionales usando la API de Brevo.
+// Se usa para la verificacion de cuenta y el reseteo de contraseña.
 @Service
 public class EmailService {
 
@@ -24,21 +26,28 @@ public class EmailService {
     @Value("${app.url:http://localhost:8080}")
     private String appUrl;
 
+    @Value("${mail.from.email:felipesanfernando@gmail.com}")
+    private String fromEmail;
+
+    @Value("${mail.from.name:GoDare}")
+    private String fromName;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // Email de verificacion de cuenta que se envia al registrarse
     public void sendVerificationEmail(String toEmail, String nick, String token) {
         String verifyUrl = appUrl + "/api/auth/verify?token=" + token;
 
         String html = """
                 <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto">
                   <div style="background:#1a1a1a;padding:24px;text-align:center">
-                    <h1 style="color:#e91e8c;margin:0;font-size:28px">VERDAD O RETO</h1>
+                    <h1 style="color:#e91e8c;margin:0;font-size:28px">GODARE</h1>
                   </div>
                   <div style="padding:32px;background:#ffffff">
-                    <h2 style="color:#1a1a1a">¡Hola, %s!</h2>
+                    <h2 style="color:#1a1a1a">Hola, %s!</h2>
                     <p style="color:#444;font-size:15px;line-height:1.6">
-                      Gracias por registrarte en <strong>Verdad o Reto</strong>.
-                      Para activar tu cuenta pulsa el botón de abajo:
+                      Gracias por registrarte en <strong>GoDare</strong>.
+                      Para activar tu cuenta pulsa el boton de abajo:
                     </p>
                     <div style="text-align:center;margin:32px 0">
                       <a href="%s"
@@ -49,35 +58,36 @@ public class EmailService {
                       </a>
                     </div>
                     <p style="color:#999;font-size:13px">
-                      Si no te has registrado en Verdad o Reto puedes ignorar este email.
+                      Si no te has registrado en GoDare puedes ignorar este email.
                       El enlace caduca en 15 minutos.
                     </p>
                   </div>
                   <div style="background:#f5f5f5;padding:16px;text-align:center">
                     <p style="color:#aaa;font-size:12px;margin:0">
-                      &copy; 2026 Verdad o Reto &middot; apweb.2f.jona@gmail.com
+                      &copy; 2026 GoDare
                     </p>
                   </div>
                 </div>
                 """.formatted(nick, verifyUrl);
 
-        sendEmail(toEmail, "Verifica tu cuenta en Verdad o Reto", html);
+        sendEmail(toEmail, "Verifica tu cuenta en GoDare", html);
     }
 
+    // Email con el codigo para restablecer la contraseña
     public void sendPasswordResetEmail(String toEmail, String nick, String token) {
         String html = """
                 <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto">
                   <div style="background:#1a1a1a;padding:24px;text-align:center">
-                    <h1 style="color:#e91e8c;margin:0;font-size:28px">VERDAD O RETO</h1>
+                    <h1 style="color:#e91e8c;margin:0;font-size:28px">GODARE</h1>
                   </div>
                   <div style="padding:32px;background:#ffffff">
-                    <h2 style="color:#1a1a1a">¡Hola, %s!</h2>
+                    <h2 style="color:#1a1a1a">Hola, %s!</h2>
                     <p style="color:#444;font-size:15px;line-height:1.6">
-                      Hemos recibido una solicitud para restablecer la contraseña
-                      de tu cuenta en <strong>Verdad o Reto</strong>.
+                      Hemos recibido una solicitud para restablecer la contrasena
+                      de tu cuenta en <strong>GoDare</strong>.
                     </p>
                     <p style="color:#444;font-size:15px;line-height:1.6">
-                      Introduce el siguiente código en la app:
+                      Introduce el siguiente codigo en la app:
                     </p>
                     <div style="text-align:center;margin:32px 0">
                       <div style="background:#f5f5f5;border:2px dashed #e91e8c;
@@ -88,20 +98,21 @@ public class EmailService {
                     </div>
                     <p style="color:#999;font-size:13px">
                       Si no has solicitado este cambio puedes ignorar este email.
-                      El código caduca en 15 minutos.
+                      El codigo caduca en 15 minutos.
                     </p>
                   </div>
                   <div style="background:#f5f5f5;padding:16px;text-align:center">
                     <p style="color:#aaa;font-size:12px;margin:0">
-                      &copy; 2026 Verdad o Reto &middot; apweb.2f.jona@gmail.com
+                      &copy; 2026 GoDare
                     </p>
                   </div>
                 </div>
                 """.formatted(nick, token);
 
-        sendEmail(toEmail, "Código para restablecer tu contraseña", html);
+        sendEmail(toEmail, "Codigo para restablecer tu contrasena en GoDare", html);
     }
 
+    // Metodo interno que construye y envia la peticion a la API de Brevo
     private void sendEmail(String to, String subject, String html) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -111,8 +122,8 @@ public class EmailService {
 
             Map<String, Object> body = Map.of(
                     "sender", Map.of(
-                            "name", "Verdad o Reto",
-                            "email", "apweb.2f.jona@gmail.com"
+                            "name", fromName,
+                            "email", fromEmail
                     ),
                     "to", List.of(Map.of("email", to)),
                     "subject", subject,
