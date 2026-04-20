@@ -1,7 +1,5 @@
 package com.godare.app.entity;
 
-// Like o dislike de un usuario sobre un post del feed.
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,4 +33,11 @@ public class PostInteraction {
     private String commentText;
 
     private Instant createdAt;
+
+    // Contadores de reacciones — solo se usan cuando type=COMMENT
+    @Builder.Default
+    private int likesCount = 0;
+
+    @Builder.Default
+    private int dislikesCount = 0;
 }

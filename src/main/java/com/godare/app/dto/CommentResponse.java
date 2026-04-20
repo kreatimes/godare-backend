@@ -16,4 +16,7 @@ public class CommentResponse {
     private String userImageUrl;
     private String commentText;
     private Instant createdAt;
+    private int likesCount;
+    private int dislikesCount;
+    private String currentReaction; // LIKE, DISLIKE, NONE
 }

@@ -38,6 +38,80 @@ public class PostInteractionService {
         return reactToPost(userId, postId, "DISLIKE");
     }
 
+    public PostReactionResponse likeComment(String userId, String commentId) {
+        return reactToComment(userId, commentId, "LIKE");
+    }
+
+    public PostReactionResponse dislikeComment(String userId, String commentId) {
+        return reactToComment(userId, commentId, "DISLIKE");
+    }
+
+    private PostReactionResponse reactToComment(String userId, String commentId, String newReaction) {
+
+        PostInteraction comment = postInteractionRepository.findById(commentId)
+                .orElseThrow(() -> new BadRequestException("Comment not found"));
+
+        if (!"COMMENT".equals(comment.getType())) {
+            throw new BadRequestException("Interaction is not a comment");
+        }
+
+        // Busca reacción previa del usuario sobre este comentario
+        PostInteraction existing = postInteractionRepository
+                .findByPostIdAndUserIdAndTypeIn(commentId, userId, List.of("COMMENT_LIKE", "COMMENT_DISLIKE"))
+                .orElse(null);
+
+        if (existing == null) {
+            // Nueva reacción
+            PostInteraction reaction = PostInteraction.builder()
+                    .postId(commentId)
+                    .userId(userId)
+                    .type("COMMENT_" + newReaction)
+                    .createdAt(Instant.now())
+                    .build();
+            postInteractionRepository.save(reaction);
+
+            if ("LIKE".equals(newReaction)) {
+                comment.setLikesCount(comment.getLikesCount() + 1);
+            } else {
+                comment.setDislikesCount(comment.getDislikesCount() + 1);
+            }
+            postInteractionRepository.save(comment);
+
+            return buildCommentReactionResponse(comment, newReaction + " added", newReaction);
+        }
+
+        String existingReaction = existing.getType().replace("COMMENT_", "");
+
+        if (existingReaction.equals(newReaction)) {
+            // Toggle off — eliminar reacción
+            if ("LIKE".equals(newReaction)) {
+                comment.setLikesCount(Math.max(0, comment.getLikesCount() - 1));
+            } else {
+                comment.setDislikesCount(Math.max(0, comment.getDislikesCount() - 1));
+            }
+            postInteractionRepository.delete(existing);
+            postInteractionRepository.save(comment);
+
+            return buildCommentReactionResponse(comment, newReaction + " removed", "NONE");
+        }
+
+        // Cambio LIKE<->DISLIKE
+        if ("LIKE".equals(existingReaction) && "DISLIKE".equals(newReaction)) {
+            comment.setLikesCount(Math.max(0, comment.getLikesCount() - 1));
+            comment.setDislikesCount(comment.getDislikesCount() + 1);
+        } else {
+            comment.setDislikesCount(Math.max(0, comment.getDislikesCount() - 1));
+            comment.setLikesCount(comment.getLikesCount() + 1);
+        }
+
+        existing.setType("COMMENT_" + newReaction);
+        existing.setCreatedAt(Instant.now());
+        postInteractionRepository.save(existing);
+        postInteractionRepository.save(comment);
+
+        return buildCommentReactionResponse(comment, "Reaction updated", newReaction);
+    }
+
     /**
      * Gestiona la reacción de un usuario sobre un post.
      * Soporta tres casos: nueva reacción, toggle off (misma reacción) y cambio LIKE<->DISLIKE.
@@ -155,10 +229,10 @@ public class PostInteractionService {
     }
 
     /**
-     * Devuelve los comentarios de un post.
-     * Resuelve los usuarios en una sola query con findAllById en lugar de N findById.
+     * Devuelve los comentarios de un post con sus contadores de reacciones.
+     * Resuelve usuarios y reacciones del usuario en batch para evitar N+1 queries.
      */
-    public List<CommentResponse> getComments(String postId) {
+    public List<CommentResponse> getComments(String postId, String currentUserId) {
 
         postRepository.findById(postId)
                 .orElseThrow(() -> new BadRequestException("Post not found"));
@@ -168,7 +242,6 @@ public class PostInteractionService {
 
         if (comments.isEmpty()) return List.of();
 
-        // Recoger todos los userIds únicos y traerlos de una sola vez
         Set<String> userIds = comments.stream()
                 .map(PostInteraction::getUserId)
                 .collect(Collectors.toSet());
@@ -177,9 +250,20 @@ public class PostInteractionService {
                 .stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
+        // Traer todas las reacciones del usuario actual sobre estos comentarios en una sola query
+        List<String> commentIds = comments.stream().map(PostInteraction::getId).toList();
+        Map<String, String> userReactionsMap = postInteractionRepository
+                .findByPostIdInAndUserIdAndTypeIn(commentIds, currentUserId, List.of("COMMENT_LIKE", "COMMENT_DISLIKE"))
+                .stream()
+                .collect(Collectors.toMap(
+                        PostInteraction::getPostId,
+                        r -> r.getType().replace("COMMENT_", "")
+                ));
+
         return comments.stream()
                 .map(comment -> {
                     User user = usersMap.get(comment.getUserId());
+                    String reaction = userReactionsMap.getOrDefault(comment.getId(), "NONE");
                     return CommentResponse.builder()
                             .id(comment.getId())
                             .postId(comment.getPostId())
@@ -188,6 +272,9 @@ public class PostInteractionService {
                             .userImageUrl(user != null ? user.getUserImageUrl() : null)
                             .commentText(comment.getCommentText())
                             .createdAt(comment.getCreatedAt())
+                            .likesCount(comment.getLikesCount())
+                            .dislikesCount(comment.getDislikesCount())
+                            .currentReaction(reaction)
                             .build();
                 })
                 .toList();
@@ -250,7 +337,6 @@ public class PostInteractionService {
         return "Comment deleted successfully";
     }
 
-    // Construye la respuesta de reacción con el estado actualizado del post
     private PostReactionResponse buildReactionResponse(Post post, String message, String currentReaction) {
         return PostReactionResponse.builder()
                 .message(message)
@@ -260,7 +346,15 @@ public class PostInteractionService {
                 .build();
     }
 
-    // Mapper reutilizable de PostInteraction + User a CommentResponse
+    private PostReactionResponse buildCommentReactionResponse(PostInteraction comment, String message, String currentReaction) {
+        return PostReactionResponse.builder()
+                .message(message)
+                .likesCount(comment.getLikesCount())
+                .dislikesCount(comment.getDislikesCount())
+                .currentReaction(currentReaction)
+                .build();
+    }
+
     private CommentResponse mapToCommentResponse(PostInteraction comment, User user) {
         return CommentResponse.builder()
                 .id(comment.getId())
@@ -270,6 +364,9 @@ public class PostInteractionService {
                 .userImageUrl(user.getUserImageUrl())
                 .commentText(comment.getCommentText())
                 .createdAt(comment.getCreatedAt())
+                .likesCount(comment.getLikesCount())
+                .dislikesCount(comment.getDislikesCount())
+                .currentReaction("NONE")
                 .build();
     }
 

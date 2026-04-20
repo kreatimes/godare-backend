@@ -12,6 +12,8 @@ public interface PostInteractionRepository extends MongoRepository<PostInteracti
 
     List<PostInteraction> findByPostIdAndTypeOrderByCreatedAtAsc(String postId, String type);
 
+    List<PostInteraction> findByPostIdInAndUserIdAndTypeIn(List<String> postIds, String userId, List<String> types);
+
     void deleteByPostIdIn(List<String> postIds);
 
     void deleteByUserId(String userId);

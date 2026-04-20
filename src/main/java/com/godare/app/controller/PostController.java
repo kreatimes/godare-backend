@@ -77,8 +77,21 @@ public class PostController {
     }
 
     @GetMapping("/{id}/comments")
-    public List<CommentResponse> getComments(@PathVariable String id) {
-        return postInteractionService.getComments(id);
+    public List<CommentResponse> getComments(@PathVariable String id, Authentication authentication) {
+        String userId = authentication.getName();
+        return postInteractionService.getComments(id, userId);
+    }
+
+    @PostMapping("/comments/{commentId}/like")
+    public PostReactionResponse likeComment(@PathVariable String commentId, Authentication authentication) {
+        String userId = authentication.getName();
+        return postInteractionService.likeComment(userId, commentId);
+    }
+
+    @PostMapping("/comments/{commentId}/dislike")
+    public PostReactionResponse dislikeComment(@PathVariable String commentId, Authentication authentication) {
+        String userId = authentication.getName();
+        return postInteractionService.dislikeComment(userId, commentId);
     }
 
     @PutMapping("/comments/{commentId}")
