@@ -190,6 +190,32 @@ public class AuthService {
     }
 
     /**
+     * Reenvía el email de verificación de cuenta.
+     * - Si el email no existe → BadRequestException
+     * - Si ya está verificado → BadRequestException
+     * - Si no está verificado → genera nuevo token y envía email
+     */
+    public String resendVerificationEmail(String email) {
+        String normalizedEmail = email.toLowerCase().trim();
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new BadRequestException("EMAIL_NOT_FOUND"));
+
+        if (user.isEmailVerified()) {
+            throw new BadRequestException("EMAIL_ALREADY_VERIFIED");
+        }
+
+        String newToken = UUID.randomUUID().toString();
+        user.setTemporaryHash(newToken);
+        user.setUnactiveAccountDate(Instant.now().plusSeconds(60 * 15));
+        userRepository.save(user);
+
+        emailService.sendVerificationEmail(user.getEmail(), user.getNick(), newToken);
+
+        return ofuscarEmail(user.getEmail());
+    }
+
+    /**
      * Ofusca un email para mostrarlo al usuario sin revelar el completo.
      * Ejemplo: jon@gmail.com → j**@gma***.com
      */
