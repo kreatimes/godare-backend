@@ -38,7 +38,7 @@ public class PostService {
                 .commentsCount(post.getCommentsCount())
                 .currentReaction(postInteractionService.getCurrentReaction(viewerUserId, postId))
                 .createdAt(post.getCreatedAt())
-                .comments(postInteractionService.getComments(postId))
+                .comments(postInteractionService.getComments(postId, viewerUserId))
                 .build();
     }
 }
