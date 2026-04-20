@@ -55,13 +55,11 @@ public class PostInteractionService {
             throw new BadRequestException("Interaction is not a comment");
         }
 
-        // Busca reacción previa del usuario sobre este comentario
         PostInteraction existing = postInteractionRepository
                 .findByPostIdAndUserIdAndTypeIn(commentId, userId, List.of("COMMENT_LIKE", "COMMENT_DISLIKE"))
                 .orElse(null);
 
         if (existing == null) {
-            // Nueva reacción
             PostInteraction reaction = PostInteraction.builder()
                     .postId(commentId)
                     .userId(userId)
@@ -83,7 +81,6 @@ public class PostInteractionService {
         String existingReaction = existing.getType().replace("COMMENT_", "");
 
         if (existingReaction.equals(newReaction)) {
-            // Toggle off — eliminar reacción
             if ("LIKE".equals(newReaction)) {
                 comment.setLikesCount(Math.max(0, comment.getLikesCount() - 1));
             } else {
@@ -95,7 +92,6 @@ public class PostInteractionService {
             return buildCommentReactionResponse(comment, newReaction + " removed", "NONE");
         }
 
-        // Cambio LIKE<->DISLIKE
         if ("LIKE".equals(existingReaction) && "DISLIKE".equals(newReaction)) {
             comment.setLikesCount(Math.max(0, comment.getLikesCount() - 1));
             comment.setDislikesCount(comment.getDislikesCount() + 1);
@@ -112,10 +108,6 @@ public class PostInteractionService {
         return buildCommentReactionResponse(comment, "Reaction updated", newReaction);
     }
 
-    /**
-     * Gestiona la reacción de un usuario sobre un post.
-     * Soporta tres casos: nueva reacción, toggle off (misma reacción) y cambio LIKE<->DISLIKE.
-     */
     private PostReactionResponse reactToPost(String userId, String postId, String newReaction) {
 
         Post post = postRepository.findById(postId)
@@ -125,7 +117,6 @@ public class PostInteractionService {
                 .findByPostIdAndUserIdAndTypeIn(postId, userId, List.of("LIKE", "DISLIKE"))
                 .orElse(null);
 
-        // Caso 1: el usuario no tenía reacción previa → añadir
         if (existingReaction == null) {
             PostInteraction interaction = new PostInteraction();
             interaction.setPostId(postId);
@@ -144,7 +135,6 @@ public class PostInteractionService {
 
             postRepository.save(post);
 
-            // Solo notificar al dueño del post si no es el mismo usuario
             if ("LIKE".equals(newReaction) && !post.getUserId().equals(userId)) {
                 createLikeNotification(userId, post);
             }
@@ -152,7 +142,6 @@ public class PostInteractionService {
             return buildReactionResponse(post, newReaction + " added", newReaction);
         }
 
-        // Caso 2: misma reacción → toggle off (eliminar)
         if (existingReaction.getType().equals(newReaction)) {
             if ("LIKE".equals(newReaction)) {
                 post.setLikesCount(Math.max(0, post.getLikesCount() - 1));
@@ -166,7 +155,6 @@ public class PostInteractionService {
             return buildReactionResponse(post, newReaction + " removed", "NONE");
         }
 
-        // Caso 3: reacción distinta → cambiar LIKE<->DISLIKE
         if ("LIKE".equals(existingReaction.getType()) && "DISLIKE".equals(newReaction)) {
             post.setLikesCount(Math.max(0, post.getLikesCount() - 1));
             post.setDislikesCount(post.getDislikesCount() + 1);
@@ -181,7 +169,6 @@ public class PostInteractionService {
         postInteractionRepository.save(existingReaction);
         postRepository.save(post);
 
-        // Solo notificar si el cambio es a LIKE sobre post ajeno
         if ("LIKE".equals(newReaction) && !post.getUserId().equals(userId)) {
             createLikeNotification(userId, post);
         }
@@ -189,7 +176,6 @@ public class PostInteractionService {
         return buildReactionResponse(post, "Reaction updated", newReaction);
     }
 
-    // Añade un comentario al post e incrementa su contador
     public CommentResponse addComment(String userId, String postId, CreateCommentRequest request) {
 
         Post post = postRepository.findById(postId)
@@ -210,7 +196,6 @@ public class PostInteractionService {
         post.setCommentsCount(post.getCommentsCount() + 1);
         postRepository.save(post);
 
-        // Solo notificar al dueño del post si no es el mismo usuario
         if (!post.getUserId().equals(userId)) {
             notificationService.createNotification(
                     post.getUserId(),
@@ -228,10 +213,6 @@ public class PostInteractionService {
         return mapToCommentResponse(saved, user);
     }
 
-    /**
-     * Devuelve los comentarios de un post con sus contadores de reacciones.
-     * Resuelve usuarios y reacciones del usuario en batch para evitar N+1 queries.
-     */
     public List<CommentResponse> getComments(String postId, String currentUserId) {
 
         postRepository.findById(postId)
@@ -250,7 +231,6 @@ public class PostInteractionService {
                 .stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        // Traer todas las reacciones del usuario actual sobre estos comentarios en una sola query
         List<String> commentIds = comments.stream().map(PostInteraction::getId).toList();
         Map<String, String> userReactionsMap = postInteractionRepository
                 .findByPostIdInAndUserIdAndTypeIn(commentIds, currentUserId, List.of("COMMENT_LIKE", "COMMENT_DISLIKE"))
@@ -280,16 +260,40 @@ public class PostInteractionService {
                 .toList();
     }
 
-    // Devuelve la reacción actual del usuario sobre un post (LIKE, DISLIKE o NONE)
-    public String getCurrentReaction(String userId, String postId) {
+    // Devuelve todos los comentarios escritos por un usuario concreto,
+    // con el postId incluido para poder navegar al post original.
+    public List<CommentResponse> getUserComments(String userId) {
 
+        List<PostInteraction> comments =
+                postInteractionRepository.findByUserIdAndTypeOrderByCreatedAtDesc(userId, "COMMENT");
+
+        if (comments.isEmpty()) return List.of();
+
+        User user = userRepository.findById(userId).orElse(null);
+
+        return comments.stream()
+                .map(comment -> CommentResponse.builder()
+                        .id(comment.getId())
+                        .postId(comment.getPostId())
+                        .userId(comment.getUserId())
+                        .userNick(user != null ? user.getNick() : "unknown")
+                        .userImageUrl(user != null ? user.getUserImageUrl() : null)
+                        .commentText(comment.getCommentText())
+                        .createdAt(comment.getCreatedAt())
+                        .likesCount(comment.getLikesCount())
+                        .dislikesCount(comment.getDislikesCount())
+                        .currentReaction("NONE")
+                        .build())
+                .toList();
+    }
+
+    public String getCurrentReaction(String userId, String postId) {
         return postInteractionRepository
                 .findByPostIdAndUserIdAndTypeIn(postId, userId, List.of("LIKE", "DISLIKE"))
                 .map(PostInteraction::getType)
                 .orElse("NONE");
     }
 
-    // Edita el texto de un comentario propio
     public CommentResponse updateComment(String userId, String commentId, UpdateCommentRequest request) {
 
         PostInteraction comment = postInteractionRepository.findById(commentId)
@@ -312,7 +316,6 @@ public class PostInteractionService {
         return mapToCommentResponse(saved, user);
     }
 
-    // Elimina un comentario propio y decrementa el contador del post
     public String deleteComment(String userId, String commentId) {
 
         PostInteraction comment = postInteractionRepository.findById(commentId)
@@ -370,7 +373,6 @@ public class PostInteractionService {
                 .build();
     }
 
-    // Busca el usuario que hizo like y lanza la notificación al dueño del post
     private void createLikeNotification(String fromUserId, Post post) {
         User fromUser = userRepository.findById(fromUserId)
                 .orElseThrow(() -> new BadRequestException("User not found"));

@@ -14,6 +14,9 @@ public interface PostInteractionRepository extends MongoRepository<PostInteracti
 
     List<PostInteraction> findByPostIdInAndUserIdAndTypeIn(List<String> postIds, String userId, List<String> types);
 
+    // Todos los comentarios de un usuario, ordenados del más reciente al más antiguo
+    List<PostInteraction> findByUserIdAndTypeOrderByCreatedAtDesc(String userId, String type);
+
     void deleteByPostIdIn(List<String> postIds);
 
     void deleteByUserId(String userId);

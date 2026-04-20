@@ -2,6 +2,7 @@ package com.godare.app.controller;
 
 import com.godare.app.dto.*;
 import com.godare.app.service.DeleteAccountService;
+import com.godare.app.service.PostInteractionService;
 import com.godare.app.service.UserPostService;
 import com.godare.app.service.UserService;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ public class UserController {
     private final UserService userService;
     private final UserPostService userPostService;
     private final DeleteAccountService deleteAccountService;
+    private final PostInteractionService postInteractionService;
 
     // Perfil completo del usuario autenticado (email, coins, stats...)
     @GetMapping("/me")
@@ -97,6 +99,12 @@ public class UserController {
         }
 
         return userPostService.getUserPosts(viewerUserId, id, limit, cursorInstant, cursorId);
+    }
+
+    // Todos los comentarios escritos por un usuario — incluye postId para navegar al post original
+    @GetMapping("/{id}/comments")
+    public List<CommentResponse> getUserComments(@PathVariable String id) {
+        return postInteractionService.getUserComments(id);
     }
 
     // Actualiza los datos del perfil del usuario autenticado
