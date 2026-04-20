@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public interface PostRepository extends MongoRepository<Post, String> {
 
@@ -21,4 +22,7 @@ public interface PostRepository extends MongoRepository<Post, String> {
 
     // Posts sin fecha de caducidad (legacy o verdades sin media)
     long countByUserIdAndExpiresAtIsNull(String userId);
+
+    // Busca el post vinculado a un UserChallenge por su referenceId
+    Optional<Post> findByReferenceId(String referenceId);
 }

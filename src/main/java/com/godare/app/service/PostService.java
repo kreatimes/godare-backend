@@ -1,6 +1,7 @@
 package com.godare.app.service;
 
 import com.godare.app.dto.PostDetailResponse;
+import com.godare.app.dto.PostResponse;
 import com.godare.app.entity.Post;
 import com.godare.app.entity.User;
 import com.godare.app.exception.BadRequestException;
@@ -40,5 +41,14 @@ public class PostService {
                 .createdAt(post.getCreatedAt())
                 .comments(postInteractionService.getComments(postId, viewerUserId))
                 .build();
+    }
+
+    // Busca el post asociado a un reto completado usando el referenceId.
+    // El post se crea con referenceId = userChallenge.getId() al completar el reto.
+    // Devuelve solo el ID del post para que el cliente navegue a él.
+    public String getPostIdByUserChallengeId(String userChallengeId) {
+        Post post = postRepository.findByReferenceId(userChallengeId)
+                .orElseThrow(() -> new BadRequestException("No hay post asociado a este reto"));
+        return post.getId();
     }
 }

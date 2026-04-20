@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -54,6 +55,16 @@ public class PostController {
     public PostDetailResponse getPostDetail(@PathVariable String id, Authentication authentication) {
         String userId = authentication.getName();
         return postService.getPostDetail(id, userId);
+    }
+
+    // Devuelve el ID del post vinculado a un reto completado.
+    // Útil para navegar al post original desde el perfil de un usuario.
+    @GetMapping("/by-challenge/{userChallengeId}")
+    public Map<String, String> getPostIdByChallenge(
+            @PathVariable String userChallengeId,
+            Authentication authentication) {
+        String postId = postService.getPostIdByUserChallengeId(userChallengeId);
+        return Map.of("postId", postId);
     }
 
     @PostMapping("/{id}/like")
