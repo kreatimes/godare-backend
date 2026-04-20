@@ -1,0 +1,56 @@
+package com.godare.app.controller;
+
+import com.godare.app.dto.*;
+import com.godare.app.entity.User;
+import com.godare.app.service.AuthService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final AuthService authService;
+
+    @PostMapping("/register")
+    public User register(@Valid @RequestBody RegisterRequest request) {
+        return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public JwtResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
+    }
+
+    @GetMapping("/verify")
+    public String verifyAccount(@RequestParam String token) {
+        return authService.verifyAccount(token);
+    }
+
+    @PostMapping("/forgot-password")
+    public String forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return authService.forgotPassword(request);
+    }
+
+    @PostMapping("/reset-password")
+    public String resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return authService.resetPassword(request);
+    }
+
+    @PatchMapping("/change-password")
+    public String changePassword(@RequestBody ChangePasswordRequest request,
+                                 Authentication authentication) {
+        String userId = authentication.getName();
+        return authService.changePassword(userId, request);
+    }
+
+    @PostMapping("/verify-password")
+    public boolean verifyPassword(@RequestBody VerifyPasswordRequest request,
+                                  Authentication authentication) {
+        String userId = authentication.getName();
+        return authService.verifyPassword(userId, request.getPassword());
+    }
+}
