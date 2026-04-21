@@ -27,5 +27,10 @@ public class PostResponse {
 
     private String currentReaction; // Reaccion del usuario que consulta el feed (LIKE, DISLIKE o NONE)
 
+    // Veredicto de si el reto fue superado
+    private int approvedCount;
+    private int notApprovedCount;
+    private String currentVerdict; // APPROVED, NOT_APPROVED, NONE
+
     private Instant createdAt;
 }

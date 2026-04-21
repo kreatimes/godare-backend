@@ -57,8 +57,6 @@ public class PostController {
         return postService.getPostDetail(id, userId);
     }
 
-    // Devuelve el ID del post vinculado a un reto completado.
-    // Útil para navegar al post original desde el perfil de un usuario.
     @GetMapping("/by-challenge/{userChallengeId}")
     public Map<String, String> getPostIdByChallenge(
             @PathVariable String userChallengeId,
@@ -77,6 +75,20 @@ public class PostController {
     public PostReactionResponse dislikePost(@PathVariable String id, Authentication authentication) {
         String userId = authentication.getName();
         return postInteractionService.dislikePost(userId, id);
+    }
+
+    // Vota que el reto SÍ fue superado
+    @PostMapping("/{id}/approve")
+    public PostReactionResponse approvePost(@PathVariable String id, Authentication authentication) {
+        String userId = authentication.getName();
+        return postInteractionService.approvePost(userId, id);
+    }
+
+    // Vota que el reto NO fue superado
+    @PostMapping("/{id}/not-approve")
+    public PostReactionResponse notApprovePost(@PathVariable String id, Authentication authentication) {
+        String userId = authentication.getName();
+        return postInteractionService.notApprovePost(userId, id);
     }
 
     @PostMapping("/{id}/comments")

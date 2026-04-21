@@ -45,4 +45,8 @@ public class Post {
     private int likesCount;
     private int dislikesCount;
     private int commentsCount;
+
+    // Votos de validación: ¿el reto fue realmente superado?
+    private int approvedCount;
+    private int notApprovedCount;
 }

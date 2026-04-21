@@ -114,7 +114,7 @@ public class FeedService {
     }
 
     // Convierte una entidad Post al DTO que se envia al cliente.
-    // Incluye el texto del reto y la reaccion del usuario que esta viendo el feed.
+    // Incluye el texto del reto, la reaccion y el veredicto del usuario que esta viendo el feed.
     private PostResponse mapToPostResponse(Post post, String viewerUserId) {
 
         User postUser = userRepository.findById(post.getUserId()).orElse(null);
@@ -139,6 +139,9 @@ public class FeedService {
                 .dislikesCount(post.getDislikesCount())
                 .commentsCount(post.getCommentsCount())
                 .currentReaction(postInteractionService.getCurrentReaction(viewerUserId, post.getId()))
+                .approvedCount(post.getApprovedCount())
+                .notApprovedCount(post.getNotApprovedCount())
+                .currentVerdict(postInteractionService.getCurrentVerdict(viewerUserId, post.getId()))
                 .createdAt(post.getCreatedAt())
                 .build();
     }

@@ -11,4 +11,9 @@ public class PostReactionResponse {
     private int likesCount;
     private int dislikesCount;
     private String currentReaction; // LIKE, DISLIKE, NONE
+
+    // Veredicto de si el reto fue superado
+    private int approvedCount;
+    private int notApprovedCount;
+    private String currentVerdict; // APPROVED, NOT_APPROVED, NONE
 }

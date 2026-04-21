@@ -38,12 +38,80 @@ public class PostInteractionService {
         return reactToPost(userId, postId, "DISLIKE");
     }
 
+    public PostReactionResponse approvePost(String userId, String postId) {
+        return verdictToPost(userId, postId, "APPROVED");
+    }
+
+    public PostReactionResponse notApprovePost(String userId, String postId) {
+        return verdictToPost(userId, postId, "NOT_APPROVED");
+    }
+
     public PostReactionResponse likeComment(String userId, String commentId) {
         return reactToComment(userId, commentId, "LIKE");
     }
 
     public PostReactionResponse dislikeComment(String userId, String commentId) {
         return reactToComment(userId, commentId, "DISLIKE");
+    }
+
+    // Gestiona el voto de veredicto (¿superado o no?) sobre un post.
+    // Lógica igual que like/dislike: si ya votaste lo mismo se deshace, si votaste
+    // lo contrario se cambia, si no habías votado se añade.
+    private PostReactionResponse verdictToPost(String userId, String postId, String newVerdict) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BadRequestException("Post not found"));
+
+        PostInteraction existing = postInteractionRepository
+                .findByPostIdAndUserIdAndTypeIn(postId, userId, List.of("APPROVED", "NOT_APPROVED"))
+                .orElse(null);
+
+        if (existing == null) {
+            PostInteraction interaction = new PostInteraction();
+            interaction.setPostId(postId);
+            interaction.setUserId(userId);
+            interaction.setType(newVerdict);
+            interaction.setCreatedAt(Instant.now());
+            postInteractionRepository.save(interaction);
+
+            if ("APPROVED".equals(newVerdict)) {
+                post.setApprovedCount(post.getApprovedCount() + 1);
+            } else {
+                post.setNotApprovedCount(post.getNotApprovedCount() + 1);
+            }
+            postRepository.save(post);
+
+            return buildVerdictResponse(post, newVerdict + " added", newVerdict);
+        }
+
+        // Ya tenía el mismo voto → se deshace (toggle off)
+        if (existing.getType().equals(newVerdict)) {
+            if ("APPROVED".equals(newVerdict)) {
+                post.setApprovedCount(Math.max(0, post.getApprovedCount() - 1));
+            } else {
+                post.setNotApprovedCount(Math.max(0, post.getNotApprovedCount() - 1));
+            }
+            postInteractionRepository.delete(existing);
+            postRepository.save(post);
+
+            return buildVerdictResponse(post, newVerdict + " removed", "NONE");
+        }
+
+        // Tenía el voto contrario → se cambia
+        if ("APPROVED".equals(existing.getType())) {
+            post.setApprovedCount(Math.max(0, post.getApprovedCount() - 1));
+            post.setNotApprovedCount(post.getNotApprovedCount() + 1);
+        } else {
+            post.setNotApprovedCount(Math.max(0, post.getNotApprovedCount() - 1));
+            post.setApprovedCount(post.getApprovedCount() + 1);
+        }
+
+        existing.setType(newVerdict);
+        existing.setCreatedAt(Instant.now());
+        postInteractionRepository.save(existing);
+        postRepository.save(post);
+
+        return buildVerdictResponse(post, "Verdict updated", newVerdict);
     }
 
     private PostReactionResponse reactToComment(String userId, String commentId, String newReaction) {
@@ -260,8 +328,6 @@ public class PostInteractionService {
                 .toList();
     }
 
-    // Devuelve todos los comentarios escritos por un usuario concreto,
-    // con el postId incluido para poder navegar al post original.
     public List<CommentResponse> getUserComments(String userId) {
 
         List<PostInteraction> comments =
@@ -290,6 +356,14 @@ public class PostInteractionService {
     public String getCurrentReaction(String userId, String postId) {
         return postInteractionRepository
                 .findByPostIdAndUserIdAndTypeIn(postId, userId, List.of("LIKE", "DISLIKE"))
+                .map(PostInteraction::getType)
+                .orElse("NONE");
+    }
+
+    // Devuelve el veredicto actual del usuario sobre un post (APPROVED, NOT_APPROVED o NONE)
+    public String getCurrentVerdict(String userId, String postId) {
+        return postInteractionRepository
+                .findByPostIdAndUserIdAndTypeIn(postId, userId, List.of("APPROVED", "NOT_APPROVED"))
                 .map(PostInteraction::getType)
                 .orElse("NONE");
     }
@@ -346,6 +420,21 @@ public class PostInteractionService {
                 .likesCount(post.getLikesCount())
                 .dislikesCount(post.getDislikesCount())
                 .currentReaction(currentReaction)
+                .approvedCount(post.getApprovedCount())
+                .notApprovedCount(post.getNotApprovedCount())
+                .currentVerdict("NONE")
+                .build();
+    }
+
+    private PostReactionResponse buildVerdictResponse(Post post, String message, String currentVerdict) {
+        return PostReactionResponse.builder()
+                .message(message)
+                .likesCount(post.getLikesCount())
+                .dislikesCount(post.getDislikesCount())
+                .currentReaction("NONE")
+                .approvedCount(post.getApprovedCount())
+                .notApprovedCount(post.getNotApprovedCount())
+                .currentVerdict(currentVerdict)
                 .build();
     }
 
@@ -355,6 +444,9 @@ public class PostInteractionService {
                 .likesCount(comment.getLikesCount())
                 .dislikesCount(comment.getDislikesCount())
                 .currentReaction(currentReaction)
+                .approvedCount(0)
+                .notApprovedCount(0)
+                .currentVerdict("NONE")
                 .build();
     }
 
