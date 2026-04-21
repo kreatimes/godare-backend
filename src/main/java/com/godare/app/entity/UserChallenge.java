@@ -44,7 +44,7 @@ public class UserChallenge {
 
     private String fileUrl;
 
-    private String filePublicId; // ID público en Cloudinary para borrado
+    private String filePublicId;
 
     private int finalScore;
 
@@ -54,4 +54,13 @@ public class UserChallenge {
     private Instant transferDate;
 
     private boolean isDaily;
+
+    // Contadores de veredicto copiados desde el post cuando se cierra la votación
+    // (5 días tras la publicación). Se guardan aquí porque el post caduca a los 7 días
+    // y estos datos deben seguir visibles en el perfil indefinidamente.
+    @Builder.Default
+    private int approvedCount = 0;
+
+    @Builder.Default
+    private int notApprovedCount = 0;
 }

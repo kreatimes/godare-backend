@@ -19,6 +19,10 @@ public interface UserChallengeRepository extends MongoRepository<UserChallenge, 
     // Lista los retos del usuario filtrados por estado, ordenados por fecha de llegada descendente
     List<UserChallenge> findByOwnerIdAndStateOrderByArrivalDateDesc(String ownerId, String state);
 
+    // Lista los retos del usuario filtrados por varios estados a la vez.
+    // Usado para consultar fallados (EXPIRED + FAILED_BY_VOTE) en una sola llamada.
+    List<UserChallenge> findByOwnerIdAndStateInOrderByArrivalDateDesc(String ownerId, List<String> states);
+
     // Lista todos los retos del usuario sin filtrar por estado
     List<UserChallenge> findByOwnerIdOrderByArrivalDateDesc(String ownerId);
 

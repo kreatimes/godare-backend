@@ -49,4 +49,9 @@ public class Post {
     // Votos de validación: ¿el reto fue realmente superado?
     private int approvedCount;
     private int notApprovedCount;
+
+    // true una vez que el scheduler ha evaluado el veredicto de este post.
+    // Evita re-procesar posts ya evaluados en cada pasada del scheduler.
+    @Builder.Default
+    private boolean verdictProcessed = false;
 }
