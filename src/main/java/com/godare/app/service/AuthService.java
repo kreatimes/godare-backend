@@ -217,7 +217,6 @@ public class AuthService {
 
     /**
      * Ofusca un email para mostrarlo al usuario sin revelar el completo.
-     * Ejemplo: jon@gmail.com → j**@gma***.com
      */
     private String ofuscarEmail(String email) {
         try {
