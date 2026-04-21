@@ -1,6 +1,6 @@
 package com.godare.app.entity;
 
-// Reto fitness del catalogo. Los retos activos se asignan a usuarios al comprar packs o como daily.
+// Reto del catalogo
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

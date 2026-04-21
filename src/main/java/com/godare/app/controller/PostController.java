@@ -77,14 +77,12 @@ public class PostController {
         return postInteractionService.dislikePost(userId, id);
     }
 
-    // Vota que el reto SÍ fue superado
     @PostMapping("/{id}/approve")
     public PostReactionResponse approvePost(@PathVariable String id, Authentication authentication) {
         String userId = authentication.getName();
         return postInteractionService.approvePost(userId, id);
     }
 
-    // Vota que el reto NO fue superado
     @PostMapping("/{id}/not-approve")
     public PostReactionResponse notApprovePost(@PathVariable String id, Authentication authentication) {
         String userId = authentication.getName();

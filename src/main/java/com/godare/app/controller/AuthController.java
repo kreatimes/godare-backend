@@ -54,8 +54,7 @@ public class AuthController {
         return authService.verifyPassword(userId, request.getPassword());
     }
 
-    // Reenvía el email de verificación al correo indicado.
-    // Respuestas: 200 con email ofuscado, 400 EMAIL_NOT_FOUND o EMAIL_ALREADY_VERIFIED
+    // reenvio de email de verificacion
     @PostMapping("/resend-verification")
     public String resendVerification(@RequestBody java.util.Map<String, String> body) {
         String email = body.get("email");

@@ -54,9 +54,7 @@ public class PostInteractionService {
         return reactToComment(userId, commentId, "DISLIKE");
     }
 
-    // Gestiona el voto de veredicto (¿superado o no?) sobre un post.
-    // Lógica igual que like/dislike: si ya votaste lo mismo se deshace, si votaste
-    // lo contrario se cambia, si no habías votado se añade.
+    // logica de veredicto igual que like/dislike (toggle)
     private PostReactionResponse verdictToPost(String userId, String postId, String newVerdict) {
 
         Post post = postRepository.findById(postId)
@@ -84,7 +82,6 @@ public class PostInteractionService {
             return buildVerdictResponse(post, newVerdict + " added", newVerdict);
         }
 
-        // Ya tenía el mismo voto → se deshace (toggle off)
         if (existing.getType().equals(newVerdict)) {
             if ("APPROVED".equals(newVerdict)) {
                 post.setApprovedCount(Math.max(0, post.getApprovedCount() - 1));
@@ -97,7 +94,6 @@ public class PostInteractionService {
             return buildVerdictResponse(post, newVerdict + " removed", "NONE");
         }
 
-        // Tenía el voto contrario → se cambia
         if ("APPROVED".equals(existing.getType())) {
             post.setApprovedCount(Math.max(0, post.getApprovedCount() - 1));
             post.setNotApprovedCount(post.getNotApprovedCount() + 1);
@@ -360,7 +356,7 @@ public class PostInteractionService {
                 .orElse("NONE");
     }
 
-    // Devuelve el veredicto actual del usuario sobre un post (APPROVED, NOT_APPROVED o NONE)
+    // veredicto actual del usuario en ese post
     public String getCurrentVerdict(String userId, String postId) {
         return postInteractionRepository
                 .findByPostIdAndUserIdAndTypeIn(postId, userId, List.of("APPROVED", "NOT_APPROVED"))

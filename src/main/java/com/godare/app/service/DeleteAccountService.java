@@ -42,7 +42,7 @@ public class DeleteAccountService {
 
         log.info("Iniciando borrado de cuenta para userId: {}", userId);
 
-        // 0. Borrar imagen de perfil si no es la default
+        // foto de perfil
         if (user.getUserImageUrl() != null &&
                 !user.getUserImageUrl().equals(DEFAULT_PROFILE_URL)) {
             String publicId = extractPublicId(user.getUserImageUrl());
@@ -51,25 +51,18 @@ public class DeleteAccountService {
             }
         }
 
-        // 1. Borrar archivos de Cloudinary de los posts
         deleteCloudinaryFiles(userId);
 
-        // 2. Borrar posts e interacciones
         deletePosts(userId);
 
-        // 3. Borrar retos asignados al usuario
         userChallengeRepository.deleteByOwnerId(userId);
 
-        // 4. Borrar notificaciones
         deleteNotifications(userId);
 
-        // 5. Borrar historial de puntos
         pointsHistoryRepository.deleteByUserId(userId);
 
-        // 6. Eliminar al usuario de los followers/following de otros
         removeFromFollowLists(userId);
 
-        // 7. Borrar el usuario
         userRepository.deleteById(userId);
 
         log.info("Cuenta borrada correctamente para userId: {}", userId);

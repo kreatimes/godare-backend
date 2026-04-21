@@ -26,9 +26,7 @@ public interface PostRepository extends MongoRepository<Post, String> {
     // Busca el post vinculado a un UserChallenge por su referenceId
     Optional<Post> findByReferenceId(String referenceId);
 
-    // Posts de tipo DARE publicados antes de un instante concreto
-    // y cuyo veredicto aún no ha sido procesado.
-    // Usados por VerdictProcessorService para evaluar retos superados/fallados.
+    // posts DARE sin veredicto procesado y con mas de X dias
     List<Post> findByPostTypeAndCreatedAtBeforeAndVerdictProcessedFalse(
             String postType, Instant createdBefore);
 }

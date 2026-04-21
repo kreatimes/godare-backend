@@ -14,18 +14,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-/**
- * Scheduler que cierra la votación de los posts de retos tras 5 días.
- *
- * Lógica:
- *  - Se ejecuta cada hora.
- *  - Busca posts DARE publicados hace más de 5 días con verdictProcessed = false.
- *  - Copia approvedCount y notApprovedCount al UserChallenge para que
- *    los contadores sean visibles en el perfil aunque el post caduque.
- *  - Si notApprovedCount > approvedCount → estado FAILED_BY_VOTE.
- *  - En cualquier otro caso el reto permanece como PASSED.
- *  - Marca verdictProcessed = true en el post para no reprocesarlo.
- */
+// Scheduler que cierra la votacion de posts tras 5 dias
 @Service
 @RequiredArgsConstructor
 public class VerdictProcessorService {

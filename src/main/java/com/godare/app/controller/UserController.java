@@ -23,20 +23,17 @@ public class UserController {
     private final DeleteAccountService deleteAccountService;
     private final PostInteractionService postInteractionService;
 
-    // Perfil completo del usuario autenticado (email, coins, stats...)
     @GetMapping("/me")
     public MyProfileResponse getMyProfile(Authentication authentication) {
         String userId = authentication.getName();
         return userService.getMyProfile(userId);
     }
 
-    // Perfil público de cualquier usuario (sin datos sensibles)
     @GetMapping("/{id}")
     public UserProfileResponse getUserProfile(@PathVariable String id) {
         return userService.getUserProfile(id);
     }
 
-    // Seguir a un usuario
     @PostMapping("/{id}/follow")
     public String followUser(@PathVariable String id, Authentication authentication) {
         String myUserId = authentication.getName();
@@ -44,7 +41,6 @@ public class UserController {
         return "User followed successfully";
     }
 
-    // Dejar de seguir a un usuario
     @DeleteMapping("/{id}/follow")
     public String unfollowUser(@PathVariable String id, Authentication authentication) {
         String myUserId = authentication.getName();
@@ -52,19 +48,16 @@ public class UserController {
         return "User unfollowed successfully";
     }
 
-    // Lista de seguidores de un usuario
     @GetMapping("/{id}/followers")
     public List<FollowUserResponse> getFollowers(@PathVariable String id) {
         return userService.getFollowers(id);
     }
 
-    // Lista de usuarios a los que sigue un usuario
     @GetMapping("/{id}/following")
     public List<FollowUserResponse> getFollowing(@PathVariable String id) {
         return userService.getFollowing(id);
     }
 
-    // Posts del usuario autenticado con paginación por cursor
     @GetMapping("/me/posts")
     public CursorFeedResponse getMyPosts(
             Authentication authentication,
@@ -82,7 +75,6 @@ public class UserController {
         return userPostService.getUserPosts(userId, userId, limit, cursorInstant, cursorId);
     }
 
-    // Posts de cualquier usuario con paginación por cursor
     @GetMapping("/{id}/posts")
     public CursorFeedResponse getUserPosts(
             @PathVariable String id,
@@ -101,13 +93,11 @@ public class UserController {
         return userPostService.getUserPosts(viewerUserId, id, limit, cursorInstant, cursorId);
     }
 
-    // Todos los comentarios escritos por un usuario — incluye postId para navegar al post original
     @GetMapping("/{id}/comments")
     public List<CommentResponse> getUserComments(@PathVariable String id) {
         return postInteractionService.getUserComments(id);
     }
 
-    // Actualiza los datos del perfil del usuario autenticado
     @PatchMapping("/me")
     public MyProfileResponse updateMyProfile(@RequestBody UpdateProfileRequest request,
                                              Authentication authentication) {
@@ -115,14 +105,12 @@ public class UserController {
         return userService.updateMyProfile(userId, request);
     }
 
-    // Packs comprados por el usuario autenticado
     @GetMapping("/me/packs")
     public List<PurchasedPackResponse> getMyPurchasedPacks(Authentication authentication) {
         String userId = authentication.getName();
         return userService.getMyPurchasedPacks(userId);
     }
 
-    // Busca usuarios por nick (mínimo 2 caracteres)
     @GetMapping("/search")
     public List<FollowUserResponse> searchUsers(
             @RequestParam String q,
@@ -131,7 +119,6 @@ public class UserController {
         return userService.searchUsers(q, userId);
     }
 
-    // Borra una imagen de perfil anterior de Cloudinary
     @DeleteMapping("/me/profile-image")
     public String deleteOldProfileImage(
             @RequestParam String imageUrl,
@@ -140,7 +127,6 @@ public class UserController {
         return "Image deleted";
     }
 
-    // Elimina la cuenta del usuario autenticado y todos sus datos
     @DeleteMapping("/me")
     public String deleteAccount(Authentication authentication) {
         String userId = authentication.getName();

@@ -79,7 +79,7 @@ public class NotificationService {
         return "All notifications marked as read";
     }
 
-    // Convierte una entidad Notification en su DTO de respuesta
+    // entity -> dto
     private NotificationResponse mapToResponse(Notification notification) {
         return NotificationResponse.builder()
                 .id(notification.getId())

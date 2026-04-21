@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.Map;
 
-// Servicio que gestiona la transferencia de retos entre usuarios.
-// Solo se pueden transferir retos en estado OPEN y a un usuario diferente al propietario.
+// Transferencia de retos
 @Service
 @RequiredArgsConstructor
 public class TransferService {
@@ -48,7 +47,6 @@ public class TransferService {
 
         Instant now = Instant.now();
 
-        // Cambiar el propietario del reto al usuario destino
         challenge.setOwnerId(targetUser.getId());
         challenge.setTransferredTo(targetUser.getId());
         challenge.setTransferDate(now);
@@ -56,7 +54,6 @@ public class TransferService {
 
         userChallengeRepository.save(challenge);
 
-        // Notificar al usuario que ha recibido un nuevo reto
         notificationService.createNotification(
                 targetUser.getId(),
                 "CHALLENGE_TRANSFERRED",

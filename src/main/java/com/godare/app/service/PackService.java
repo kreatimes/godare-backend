@@ -70,9 +70,7 @@ public class PackService {
                 .build();
     }
 
-    // Genera todos los retos del pack de una vez.
-    // Carga todos los challenges activos, los baraja y toma los primeros N
-    // para garantizar que no hay repetidos dentro de la misma compra.
+    // genera los retos del pack sin repetidos
     private int generatePackItems(String userId, PackStore pack) {
 
         Instant now = Instant.now();
@@ -110,7 +108,7 @@ public class PackService {
             toSave.add(userChallenge);
         }
 
-        // Guardado en batch — una sola llamada a MongoDB para todos los retos
+        // saveAll en batch
         userChallengeRepository.saveAll(toSave);
 
         return toSave.size();

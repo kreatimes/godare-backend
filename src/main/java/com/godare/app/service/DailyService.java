@@ -88,8 +88,7 @@ public class DailyService {
         return generateAndSaveDaily(user);
     }
 
-    // Genera un reto daily nuevo para el usuario y lo guarda en la BD.
-    // Marca lastDailyAssignedAt para evitar duplicados si el usuario lo transfiere.
+    // genera daily y guarda lastDailyAssignedAt para evitar duplicados
     private DailyItemResponse generateAndSaveDaily(User user) {
 
         Instant now = Instant.now();
@@ -130,8 +129,7 @@ public class DailyService {
                 .build();
     }
 
-    // Obtiene un reto activo al azar usando la agregacion $sample de MongoDB.
-    // Asi evitamos cargar toda la coleccion en memoria para elegir uno aleatorio.
+    // $sample de mongo para no cargar todo en memoria
     private Optional<Challenge> sampleActiveChallenge() {
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("active").is(true)),

@@ -55,9 +55,7 @@ public class UserChallenge {
 
     private boolean isDaily;
 
-    // Contadores de veredicto copiados desde el post cuando se cierra la votación
-    // (5 días tras la publicación). Se guardan aquí porque el post caduca a los 7 días
-    // y estos datos deben seguir visibles en el perfil indefinidamente.
+    // contadores del veredicto, se copian al cerrar la votacion
     @Builder.Default
     private int approvedCount = 0;
 

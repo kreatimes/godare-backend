@@ -17,9 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-// Servicio que construye el feed de posts.
-// Usamos paginacion por cursor en lugar de pagina numerada para que el feed
-// no salte si se publican posts nuevos mientras el usuario esta navegando.
+// Feed de posts con paginacion por cursor
 @Service
 @RequiredArgsConstructor
 public class FeedService {
@@ -113,8 +111,7 @@ public class FeedService {
                 .build();
     }
 
-    // Convierte una entidad Post al DTO que se envia al cliente.
-    // Incluye el texto del reto, la reaccion y el veredicto del usuario que esta viendo el feed.
+    // mapeo del post al dto de respuesta
     private PostResponse mapToPostResponse(Post post, String viewerUserId) {
 
         User postUser = userRepository.findById(post.getUserId()).orElse(null);

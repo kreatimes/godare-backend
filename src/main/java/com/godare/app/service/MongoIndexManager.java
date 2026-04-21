@@ -10,8 +10,7 @@ import org.springframework.data.mongodb.core.index.CompoundIndexDefinition;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.stereotype.Component;
 
-// Crea los indices de MongoDB al arrancar la aplicacion.
-// Es importante tenerlos para que las consultas del feed y el perfil vayan rapidas.
+// indices de mongo al arrancar
 @Component
 @RequiredArgsConstructor
 public class MongoIndexManager {

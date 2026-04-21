@@ -30,7 +30,7 @@ public class UserService {
     private final NotificationService notificationService;
     private final CloudinaryService cloudinaryService;
 
-    // Devuelve el perfil completo del usuario autenticado, incluyendo stats y rango
+    // perfil del usuario autenticado
     public MyProfileResponse getMyProfile(String userId) {
 
         User user = userRepository.findById(userId)
@@ -58,7 +58,7 @@ public class UserService {
                 .build();
     }
 
-    // Devuelve el perfil público de cualquier usuario (sin email ni coins)
+    // perfil publico (sin email ni coins)
     public UserProfileResponse getUserProfile(String userId) {
 
         User user = userRepository.findById(userId)
@@ -141,7 +141,7 @@ public class UserService {
         userRepository.save(target);
     }
 
-    // Resuelve todos los followers en una sola query con findAllById en lugar de N findById
+    // una sola query para todos los followers
     public List<FollowUserResponse> getFollowers(String userId) {
 
         User user = userRepository.findById(userId)
@@ -161,7 +161,7 @@ public class UserService {
                 .toList();
     }
 
-    // Mismo patrón que getFollowers pero para los seguidos
+    // igual que getFollowers pero para following
     public List<FollowUserResponse> getFollowing(String userId) {
 
         User user = userRepository.findById(userId)
@@ -211,7 +211,7 @@ public class UserService {
         return getMyProfile(userId);
     }
 
-    // Resuelve todos los packs en una sola query en lugar de N findById
+    // una query para los packs
     public List<PurchasedPackResponse> getMyPurchasedPacks(String userId) {
 
         User user = userRepository.findById(userId)
@@ -243,13 +243,13 @@ public class UserService {
                 .toList();
     }
 
-    // Usado internamente por otros servicios para obtener el usuario autenticado
+    // helper interno
     public User getAuthenticatedUser(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("Authenticated user not found"));
     }
 
-    // Construye las estadísticas del perfil con counts directos a Mongo
+    // stats del perfil
     private ProfileStatsResponse buildProfileStats(String userId) {
 
         long completedDares  = userChallengeRepository.countByOwnerIdAndState(userId, "PASSED");
@@ -269,7 +269,7 @@ public class UserService {
                 .build();
     }
 
-    // Mapper reutilizable para convertir un User en FollowUserResponse
+    // User -> FollowUserResponse
     private FollowUserResponse mapToFollowResponse(User user) {
         return FollowUserResponse.builder()
                 .id(user.getId())

@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.Map;
 
-// Servicio que gestiona la logica de completar un reto fitness.
-// Cuando el usuario completa un reto se le asignan puntos y monedas,
-// se crea un post en el feed y se actualiza su rango si procede.
+// Logica de completar un reto
 @Service
 @RequiredArgsConstructor
 public class ChallengeExecutionService {
@@ -52,7 +50,6 @@ public class ChallengeExecutionService {
             throw new BadRequestException("Challenge is not pending");
         }
 
-        // Actualizar el estado del reto
         challenge.setState("PASSED");
         challenge.setDatePassed(now);
         challenge.setFileUrl(request.getFileUrl());
@@ -62,11 +59,9 @@ public class ChallengeExecutionService {
         challenge.setFilePublicId(mediaPublicId);
         userChallengeRepository.save(challenge);
 
-        // Dar puntos y monedas al usuario
         applyRewards(user, userId, challenge.getId(),
                 "COMPLETED_DARE", DARE_POINTS, DARE_COINS, now);
 
-        // Crear el post que aparecera en el feed de seguidores
         Post post = new Post();
         post.setUserId(userId);
         post.setPostType("DARE");
@@ -84,7 +79,7 @@ public class ChallengeExecutionService {
         return "Challenge completed successfully";
     }
 
-    // Aplica las recompensas al usuario: suma puntos, monedas y sube de rango si toca
+    // suma puntos y monedas, actualiza rango si toca
     private void applyRewards(User user, String userId, String referenceId,
                               String reason, int points, int coins, Instant now) {
         int previousRange = user.getRange();
@@ -119,8 +114,7 @@ public class ChallengeExecutionService {
         }
     }
 
-    // Extrae el publicId de una URL de Cloudinary para poder borrar el archivo si hace falta.
-    // Ejemplo: https://res.cloudinary.com/cloud/video/upload/v123/mi_video.mp4 -> mi_video
+    // extract publicId from cloudinary URL to allow deletion later
     private String extractPublicId(String url) {
         if (url == null || url.isBlank()) return null;
         try {

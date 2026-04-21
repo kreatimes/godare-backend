@@ -20,8 +20,7 @@ public class MyChallengesService {
     private static final List<String> PUBLIC_CHALLENGE_STATES =
             List.of("PASSED", "EXPIRED");
 
-    // Cuando el cliente pide "EXPIRED" devolvemos también FAILED_BY_VOTE,
-    // ya que ambos representan retos fallados en el perfil del usuario.
+    // EXPIRED y FAILED_BY_VOTE son los dos tipos de fallo
     private static final List<String> FAILED_STATES = List.of("EXPIRED", "FAILED_BY_VOTE");
 
     public List<UserChallengeResponse> getMyChallenges(String userId, String state) {
